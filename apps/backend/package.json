@@ -1,0 +1,15 @@
+{
+  "name": "backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "build": "echo 'Python backend - no build step'",
+    "lint": "echo 'Python backend - no lint step'",
+    "test": "echo 'Python backend - no test step'",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "migrate": "alembic upgrade head",
+    "migrate:create": "alembic revision --autogenerate -m"
+  }
+}

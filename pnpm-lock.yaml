@@ -223,6 +223,8 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
+  apps/backend: {}
+
 packages:
 
   '@babel/code-frame@7.29.7':
