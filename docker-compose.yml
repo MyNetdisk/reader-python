@@ -1,0 +1,73 @@
+# Build & start Backend, Web and database from the project root:
+#   docker compose up --build
+#
+# Services communicate over the internal `appnet` network using service names:
+#   - backend -> db    (MySQL host is `db`)
+#   - web     -> backend (nginx proxies /api to http://backend:8000)
+services:
+  db:
+    image: mysql:8.0
+    container_name: reader-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: reader
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-ppassword"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+    networks:
+      - appnet
+
+  backend:
+    build:
+      context: ./apps/backend
+    container_name: reader-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: mysql+aiomysql://root:password@db:3306/reader
+      DATABASE_HOST: db
+      DATABASE_PORT: "3306"
+      DATABASE_USER: root
+      DATABASE_PASSWORD: password
+      DATABASE_NAME: reader
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - appnet
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: reader-web
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    driver: bridge
+
+volumes:
+  db_data:
