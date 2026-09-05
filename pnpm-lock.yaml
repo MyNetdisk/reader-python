@@ -231,6 +231,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@reader/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       axios:
         specifier: ^1.20.0
         version: 1.20.0(debug@4.4.3)
@@ -262,6 +265,8 @@ importers:
       vue-tsc:
         specifier: ^3.3.11
         version: 3.3.11(typescript@6.0.3)
+
+  packages/utils: {}
 
 packages:
 

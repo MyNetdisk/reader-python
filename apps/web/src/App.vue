@@ -13,6 +13,10 @@
   </div>
 </template>
 
+<script lang="ts">
+import { formatDate, isEmail } from '@reader/utils';
+</script>
+
 <style>
 * {
   margin: 0;
