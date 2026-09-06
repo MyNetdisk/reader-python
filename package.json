@@ -5,7 +5,11 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "node scripts/dev.js",
+    "dev:turbo": "turbo run dev",
+    "db:start": "node scripts/db-start.js",
+    "db:status": "node scripts/db-status.js",
+    "db:stop": "node scripts/db-stop.js",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
