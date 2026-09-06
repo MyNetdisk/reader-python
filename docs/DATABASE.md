@@ -1,200 +1,96 @@
-### MySQL 免安装版（ZIP）完整配置教程
+# 🗃️ 数据库设计规范
 
-#### 第一步：下载与解压
+本文档描述 Reader Python 项目的数据库表结构、字段定义与设计约定。
 
-1. 前往 MySQL 官网下载页面，选择 **MySQL Community Server**
-2. 操作系统选 **Microsoft Windows**
-3. 下载 **ZIP Archive** 版本（如 `mysql-8.0.xx-winx64.zip`），**不要选 MSI Installer**
-4. 将 ZIP 文件解压到项目的 `db/mysql/` 目录下
+> 本地 MySQL 的安装与配置见 [MYSQL_SETUP.md](./MYSQL_SETUP.md)。
 
-解压后目录结构如下：
-```text
-db/
-└── mysql/
-    ├── bin/          ← MySQL 可执行文件
-    ├── lib/
-    ├── share/
-    ├── docs/
-    └── ...
-```
+## 概述
 
-> ⚠️ 解压路径中**不要有中文、空格和特殊字符**，否则可能导致启动失败。
+| 项目 | 值 |
+|------|-----|
+| 数据库类型 | MySQL 8.0 |
+| 字符集 | utf8mb4 |
+| 排序规则 | utf8mb4_unicode_ci |
+| 存储引擎 | InnoDB |
+| 数据库名 | reader |
+| ORM | SQLAlchemy 2.0（异步） |
+| 迁移工具 | Alembic |
 
----
+## 命名约定
 
-#### 第二步：创建配置文件 `my.ini`
+- 表名：小写蛇形命名（snake_case），使用复数形式，如 `books`
+- 字段名：小写蛇形命名，如 `created_at`
+- 主键：统一命名 `id`，自增整数
+- 时间字段：`created_at`（创建时间）、`updated_at`（更新时间），由数据库默认值维护
+- 索引：外键字段与高频查询字段建立索引
 
-在 `db/` 目录下（与 `mysql/` 同级）新建 `my.ini` 文件，内容如下（**请将路径替换为你的实际项目路径**）：
+## 表结构
 
-```ini
-[mysqld]
-# MySQL 安装目录（解压后的根目录）
-basedir=C:/Users/MyNetdisk/Documents/Project/ebook-platform/reader-python/db/mysql
-# 数据存放目录（初始化时自动生成，无需手动创建）
-datadir=C:/Users/MyNetdisk/Documents/Project/ebook-platform/reader-python/db/data
-# 端口
-port=3306
-# 字符集（推荐 utf8mb4，支持 emoji）
-character-set-server=utf8mb4
-collation-server=utf8mb4_unicode_ci
-# 默认存储引擎
-default-storage-engine=INNODB
-# 最大连接数
-max_connections=200
+### books —— 电子书表
 
-[mysql]
-# MySQL 客户端字符集
-default-character-set=utf8mb4
+存储电子书的基本元数据。
 
-[client]
-# 客户端连接端口和字符集
-port=3306
-default-character-set=utf8mb4
-```
+| 字段 | 类型 | 约束 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `id` | INT | PK, AUTO_INCREMENT | — | 主键 |
+| `title` | VARCHAR(255) | NOT NULL | — | 书名 |
+| `author` | VARCHAR(255) | NOT NULL | — | 作者 |
+| `description` | TEXT | NULL | NULL | 简介 |
+| `cover_url` | VARCHAR(500) | NULL | NULL | 封面地址 |
+| `created_at` | DATETIME | NOT NULL | `now()` | 创建时间 |
+| `updated_at` | DATETIME | NOT NULL | `now()` | 更新时间 |
 
-> ⚠️ 注意事项：
-> - 路径分隔符用**正斜杠 `/`** 或**双反斜杠 `\\`**，不要用单反斜杠 `\`
-> - 文件编码保存为 **ANSI** 或 **UTF-8 无 BOM**，用记事本保存为 UTF-8 带 BOM 可能导致 "unknown option" 错误
-
----
-
-#### 第三步：初始化数据库
-
-1. 按 `Win + S` 搜索 **cmd**，右键选择 **"以管理员身份运行"**
-2. 进入 MySQL 的 `bin` 目录并执行初始化命令：
-
-```bash
-cd C:\Users\MyNetdisk\Documents\Project\ebook-platform\reader-python\db\mysql\bin
-
-mysqld --defaults-file="C:\Users\MyNetdisk\Documents\Project\ebook-platform\reader-python\db\my.ini" --initialize-insecure --console
-```
-
-> ⚠️ **关键**：初始化时必须通过 `--defaults-file` 指定配置文件路径，否则 MySQL 会忽略 `my.ini` 中的 `datadir` 配置，将 `data` 目录默认创建在 `mysql/` 内部而非与 `mysql/` 同级。
-
-执行后控制台会输出日志，看到类似以下内容表示初始化成功：
-```
-[Note] [MY-010454] A temporary password is generated for root@localhost: ...
-```
-
-> 执行成功后，`db/data/` 目录会自动生成在 `db/` 下（与 `mysql/` 同级），里面包含数据库的系统文件。
-
----
-
-#### 第四步：注册为 Windows 服务
-
-仍在管理员 CMD 中执行：
-
-```bash
-mysqld --install MySQL_Reader --defaults-file="C:\Users\MyNetdisk\Documents\Project\ebook-platform\reader-python\db\my.ini"
-```
-
-看到 `Service successfully installed.` 表示注册成功。
-
-> ⚠️ `--defaults-file` 参数**不要省略**，否则 MySQL 会忽略你的自定义配置而使用内置默认值。
-
----
-
-#### 第五步：启动服务
-
-```bash
-net start MySQL_Reader
-```
-
-看到 `MySQL_Reader 服务已经启动成功。` 表示启动成功。
-
-> ⚠️ 如果服务启动失败，常见原因是 Windows 服务以 `SYSTEM` 账户运行，可能没有权限访问 `C:\Users\...` 下的用户目录。此时可将 `db` 目录移到非用户目录（如 `C:\db\`），或改用前台命令运行：
-> ```bash
-> mysqld --defaults-file="...\my.ini" --console
-> ```
-> 窗口保持打开即可，另开 CMD 执行 `mysql -u root -p` 连接。
-
----
-
-#### 第六步：登录并修改密码
-
-```bash
-mysql -u root -p
-```
-
-- 如果第三步用的是 `--initialize`，输入记下的临时密码
-- 如果用的是 `--initialize-insecure`，直接按回车（空密码）
-
-登录成功后，修改 root 密码：
+建表 SQL（由 Alembic 迁移自动生成）：
 
 ```sql
-ALTER USER 'root'@'localhost' IDENTIFIED BY '你的新密码';
-FLUSH PRIVILEGES;
-EXIT;
+CREATE TABLE books (
+    id INT NOT NULL AUTO_INCREMENT,
+    title VARCHAR(255) NOT NULL COMMENT '书名',
+    author VARCHAR(255) NOT NULL COMMENT '作者',
+    description TEXT NULL COMMENT '简介',
+    cover_url VARCHAR(500) NULL COMMENT '封面地址',
+    created_at DATETIME NOT NULL DEFAULT now() COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT now() COMMENT '更新时间',
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
----
+## 模型定义
 
-#### 第七步：配置环境变量（可选）
+对应 SQLAlchemy 模型位于 `apps/backend/app/models/book.py`：
 
-这样可以在任意位置直接使用 `mysql` 命令，不用每次都进入 `bin` 目录。
+```python
+class Book(Base):
+    __tablename__ = "books"
 
-1. 右键 **"此电脑"** → **属性** → **高级系统设置** → **环境变量**
-2. 在 **系统变量** 中新建：
-   - 变量名：`MYSQL_HOME`
-   - 变量值：`C:\Users\MyNetdisk\Documents\Project\ebook-platform\reader-python\db\mysql`
-3. 编辑系统变量中的 `Path`，新增一条：
-   - `%MYSQL_HOME%\bin`
-4. 确定保存，**重新打开** CMD 窗口即可生效
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False, comment="书名")
+    author: Mapped[str] = mapped_column(String(255), nullable=False, comment="作者")
+    description: Mapped[str | None] = mapped_column(Text, nullable=True, comment="简介")
+    cover_url: Mapped[str | None] = mapped_column(String(500), nullable=True, comment="封面地址")
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), comment="创建时间")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now(), comment="更新时间")
+```
 
----
+## 数据库迁移
 
-#### 第八步：验证安装
+迁移脚本位于 `apps/backend/alembic/versions/`。
 
 ```bash
-mysql --version
+# 生成迁移（模型变更后）
+cd apps/backend && python -m alembic revision --autogenerate -m "描述"
+
+# 执行迁移
+cd apps/backend && python -m alembic upgrade head
+
+# 回滚一个版本
+cd apps/backend && python -m alembic downgrade -1
 ```
 
-输出类似 `mysql  Ver 8.0.xx for Win64 on x86_64 (MySQL Community Server)` 即表示安装成功。
+> ⚠️ `alembic` 控制台脚本不会将当前目录加入 `sys.path`，需用 `python -m alembic` 运行，否则会报 `ModuleNotFoundError: No module named 'app'`。
 
----
+### 当前迁移版本
 
-### 最终目录结构
-
-```text
-reader-python/
-├── db/
-│   ├── mysql/              ← MySQL 解压文件
-│   │   ├── bin/
-│   │   ├── lib/
-│   │   ├── share/
-│   │   └── ...
-│   ├── data/               ← 初始化后自动生成（与 mysql/ 同级）
-│   └── my.ini              ← 配置文件（与 mysql/ 同级）
-└── ...
-```
-
----
-
-### 常用命令速查
-
-| 操作 | 命令 |
-| :--- | :--- |
-| 启动服务 | `net start MySQL_Reader` |
-| 停止服务 | `net stop MySQL_Reader` |
-| 登录 MySQL | `mysql -u root -p` |
-| 卸载服务 | 先 `net stop MySQL_Reader`，再 `mysqld --remove MySQL_Reader` |
-
----
-
-### 常见问题排查
-
-| 问题 | 解决方案 |
-| :--- | :--- |
-| 缺少 `VCRUNTIME140.dll` | 安装 Visual C++ Redistributable |
-| 端口 3306 被占用 | 修改 `my.ini` 中的 `port` 为其他端口（如 3307） |
-| 服务启动失败 | 检查 `my.ini` 路径是否正确、是否以管理员身份运行 |
-| `data` 目录位置不对 | 初始化时必须加 `--defaults-file` 参数指定配置文件 |
-| 忘记密码 | 停止服务 → `my.ini` 的 `[mysqld]` 下添加 `skip-grant-tables` → 启动服务 → 免密登录 → 重置密码 → 删除该配置 → 重启服务 |
-
----
-
-### 踩坑总结
-
-本次安装过程中遇到的核心问题：**初始化时未指定 `--defaults-file` 参数**，导致 MySQL 没有读取 `my.ini` 中的 `datadir` 配置，将 `data` 目录创建在了 `mysql/` 内部而非与 `mysql/` 同级，进而导致服务启动失败。
-
-**教训**：凡是涉及 `mysqld` 的命令（初始化、注册服务、启动），都应显式指定 `--defaults-file` 参数，确保 MySQL 读取正确的配置文件。
+| Revision | 说明 |
+|----------|------|
+| `c00cdff2e435` | init：创建 `books` 表 |

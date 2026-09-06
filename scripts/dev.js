@@ -38,7 +38,7 @@ async function startMysql() {
 
   if (!fs.existsSync(MYSQLD)) {
     console.error(`[dev] 未找到 MySQL 可执行文件：${MYSQLD}`);
-    console.error('[dev] 请先按 docs/DATABASE.md 说明将 MySQL 解压到 db/mysql/ 目录。');
+    console.error('[dev] 请先按 docs/MYSQL_SETUP.md 说明将 MySQL 解压到 db/mysql/ 目录。');
     process.exit(1);
   }
 

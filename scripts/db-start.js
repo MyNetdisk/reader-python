@@ -15,7 +15,7 @@ async function main() {
 
   if (!fs.existsSync(MYSQLD)) {
     console.error(`[db:start] 未找到 MySQL：${MYSQLD}`);
-    console.error('[db:start] 请先按 docs/DATABASE.md 解压 MySQL 到 db/mysql/。');
+    console.error('[db:start] 请先按 docs/MYSQL_SETUP.md 解压 MySQL 到 db/mysql/。');
     process.exit(1);
   }
 
