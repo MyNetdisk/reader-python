@@ -72,6 +72,9 @@ docker compose up --build
 启动后：
 - 前端：http://localhost:5173
 - 后端健康检查：http://localhost:8000/health
+- API 文档（Swagger）：http://localhost:8000/docs
+
+所有业务接口统一前缀 `/api/v1`，当前已有 books 的 CRUD 接口，详见根 [README.md](../README.md#api-接口)。
 
 ## 数据库初始化
 

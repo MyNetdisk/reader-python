@@ -111,6 +111,44 @@ docker compose up --build
 
 ***
 
+## 服务地址与接口
+
+### 本地开发模式（`pnpm dev`）
+
+| 服务 | 地址 | 说明 |
+|------|------|------|
+| MySQL | localhost:3306 | 数据库，库名 `reader`，用户 `root` |
+| 后端 API | http://localhost:8000 | FastAPI 服务 |
+| 后端健康检查 | http://localhost:8000/health | 返回 `{"status": "ok"}` |
+| API 文档（Swagger） | http://localhost:8000/docs | FastAPI 自动生成，可在线调试 |
+| Web 前端 | http://localhost:5173 | Vite 开发服务器，`/api` 自动代理到 8000 |
+
+### Docker 模式（`docker compose up`）
+
+| 服务 | 地址 | 说明 |
+|------|------|------|
+| MySQL | localhost:3306 | 容器 `db`，数据持久化到 `db_data` 卷 |
+| 后端 API | http://localhost:8000 | 容器 `backend`，内部通过服务名 `db` 连数据库 |
+| 后端健康检查 | http://localhost:8000/health | — |
+| API 文档（Swagger） | http://localhost:8000/docs | — |
+| Web 前端 | http://localhost:5173 | 容器 `web`，nginx 提供 SPA + `/api` 反代到 `backend:8000` |
+
+### API 接口
+
+所有业务接口统一前缀 `/api/v1`，当前已有：
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/books/` | 获取书籍列表（`?skip=0&limit=20`） |
+| GET | `/api/v1/books/{id}` | 获取单本书籍 |
+| POST | `/api/v1/books/` | 创建书籍 |
+| PUT | `/api/v1/books/{id}` | 更新书籍 |
+| DELETE | `/api/v1/books/{id}` | 删除书籍 |
+
+> 完整接口定义见 `apps/backend/app/api/`，或启动后访问 http://localhost:8000/docs 查看 Swagger 文档。
+
+---
+
 ## 常用命令
 
 | 命令               | 说明                               |

@@ -147,19 +147,38 @@ pnpm turbo run dev --filter=web
 
 启动成功后访问：
 
-| 服务 | 地址 |
-|------|------|
-| Web 前端 | http://localhost:5173 |
-| 后端 API | http://localhost:8000 |
-| 后端健康检查 | http://localhost:8000/health |
-| API 文档 | http://localhost:8000/docs |
+| 服务 | 地址 | 说明 |
+|------|------|------|
+| Web 前端 | http://localhost:5173 | Vite 开发服务器 |
+| 后端 API | http://localhost:8000 | FastAPI 服务 |
+| 后端健康检查 | http://localhost:8000/health | 返回 `{"status": "ok"}` |
+| API 文档（Swagger） | http://localhost:8000/docs | 交互式 API 文档，可在线调试 |
+| MySQL | localhost:3306 | 库名 `reader`，用户 `root` |
 
 验证数据库连接：
 
 ```bash
+# 列出所有书籍（空表返回 []）
 curl http://localhost:8000/api/v1/books/
-# 返回 [] 表示连接正常
+
+# 创建一本书籍
+curl -X POST http://localhost:8000/api/v1/books/ \
+  -H "Content-Type: application/json" \
+  -d '{"title":"测试书籍","author":"测试作者"}'
+
+# 查看刚创建的书籍
+curl http://localhost:8000/api/v1/books/1
 ```
+
+当前可用 API 接口：
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/books/` | 获取书籍列表（`?skip=0&limit=20`） |
+| GET | `/api/v1/books/{id}` | 获取单本书籍 |
+| POST | `/api/v1/books/` | 创建书籍 |
+| PUT | `/api/v1/books/{id}` | 更新书籍 |
+| DELETE | `/api/v1/books/{id}` | 删除书籍 |
 
 ## 8. 常见问题
 
